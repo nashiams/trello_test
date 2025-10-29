@@ -73,6 +73,10 @@ class TaskController {
 
       return res.status(200).json(task);
     } catch (err) {
+      // If Sequelize can't find/cast the ID, treat as not found
+      if (err.name === "SequelizeDatabaseError") {
+        return res.status(404).json({ error: "Task not found" });
+      }
       next(err);
     }
   }
@@ -89,6 +93,10 @@ class TaskController {
       await task.destroy();
       return res.status(200).json({ message: "Task deleted successfully" });
     } catch (err) {
+      // If Sequelize can't find/cast the ID, treat as not found
+      if (err.name === "SequelizeDatabaseError") {
+        return res.status(404).json({ error: "Task not found" });
+      }
       next(err);
     }
   }
