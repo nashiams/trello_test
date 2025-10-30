@@ -23,13 +23,9 @@ type ColumnProps = {
 const SortableTaskCard = ({
   task,
   onClick,
-  onDelete,
-  onMarkDone,
 }: {
   task: Task;
   onClick: () => void;
-  onDelete: () => void;
-  onMarkDone: () => void;
 }) => {
   const {
     attributes,
@@ -48,12 +44,7 @@ const SortableTaskCard = ({
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <TaskCard
-        task={task}
-        onClick={onClick}
-        onDelete={onDelete}
-        onMarkDone={onMarkDone}
-      />
+      <TaskCard task={task} onClick={onClick} />
     </div>
   );
 };
@@ -75,14 +66,6 @@ export const Column = ({ title, bgColor, tasks, status }: ColumnProps) => {
   const handleCardClick = (task: Task) => {
     setSelectedTask(task);
     setIsModalOpen(true);
-  };
-
-  const handleDeleteCard = (taskId: number) => {
-    // This will be handled by the TaskCard component
-  };
-
-  const handleMarkDone = (taskId: number) => {
-    // This will be handled by the TaskCard component
   };
 
   return (
@@ -124,8 +107,6 @@ export const Column = ({ title, bgColor, tasks, status }: ColumnProps) => {
                     key={task.id}
                     task={task}
                     onClick={() => handleCardClick(task)}
-                    onDelete={() => handleDeleteCard(task.id)}
-                    onMarkDone={() => handleMarkDone(task.id)}
                   />
                 ))}
               </SortableContext>

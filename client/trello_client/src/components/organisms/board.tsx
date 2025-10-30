@@ -13,9 +13,9 @@ import { Column } from "../molecules/column";
 import { useTaskStore } from "../../store/task-store";
 
 const columnConfig = [
-  { title: "To Do", status: "To Do" as const, bgColor: "#9b87c9" },
-  { title: "In Progress", status: "In Progress" as const, bgColor: "#e8a76a" },
-  { title: "Done", status: "Done" as const, bgColor: "#79b881" },
+  { title: "To Do", status: "To Do" as const, bgColor: "#543669" },
+  { title: "In Progress", status: "In Progress" as const, bgColor: "#664629" },
+  { title: "Done", status: "Done" as const, bgColor: "#2d5932" },
 ];
 
 export const Board = () => {
@@ -76,7 +76,7 @@ export const Board = () => {
           onDragEnd={handleDragEnd}
         >
           <div className="flex gap-4">
-            {/* tambah atau ubah warna di array columnConfig */}
+            {/* tambah column atau ubah warna column di array columnConfig */}
             {columnConfig.map((config) => (
               <Column
                 key={config.status}

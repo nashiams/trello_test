@@ -40,5 +40,20 @@ services:
     volumes:
       - ./server:/app
 
+  frontend:
+    build: ./client/trello_client
+    container_name: react_frontend
+    env_file:
+      - .env
+    depends_on:
+      - backend
+    environment:
+      - VITE_API_URL=http://localhost:3000
+    ports:
+      - "5173:80"
+    volumes:
+      - ./client/trello_client:/app
+      - /app/node_modules
+
 volumes:
   db_data:

@@ -7,16 +7,9 @@ import { useTaskStore, type Task } from "../../store/task-store";
 type TaskCardProps = {
   task: Task;
   onClick: () => void;
-  onDelete: () => void;
-  onMarkDone: () => void;
 };
 
-export const TaskCard = ({
-  task,
-  onClick,
-  onDelete,
-  onMarkDone,
-}: TaskCardProps) => {
+export const TaskCard = ({ task, onClick }: TaskCardProps) => {
   const { deleteTask, updateTask } = useTaskStore();
   const [isHovered, setIsHovered] = useState(false);
 
@@ -32,13 +25,11 @@ export const TaskCard = ({
   const handleDelete = async (e: React.MouseEvent) => {
     e.stopPropagation();
     await deleteTask(task.id);
-    onDelete();
   };
 
   const handleMarkDone = async (e: React.MouseEvent) => {
     e.stopPropagation();
     await updateTask(task.id, { status: "Done" });
-    onMarkDone();
   };
 
   return (
