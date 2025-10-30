@@ -1,3 +1,5 @@
+docker compose up -d --no-deps --build frontend
+
 Frontend (React.js, Vite)
 Buat antarmuka (UI) untuk menampilkan board Kanban menggunakan React.js dan Vite.
 

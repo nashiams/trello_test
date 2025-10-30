@@ -18,6 +18,8 @@ type TaskStore = {
   deleteTask: (id: number) => Promise<void>;
 };
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
 export const useTaskStore = create<TaskStore>((set, get) => ({
   tasks: {
     "To Do": [],
@@ -29,7 +31,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   fetchTasks: async () => {
     set({ isLoading: true });
     try {
-      const response = await fetch("/api/tasks");
+      const response = await fetch(`${API_URL}/api/tasks`);
       const data = await response.json();
       set({ tasks: data, isLoading: false });
     } catch (error) {
@@ -40,7 +42,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
 
   createTask: async (title: string, description: string) => {
     try {
-      const response = await fetch("/api/tasks", {
+      const response = await fetch(`${API_URL}/api/tasks`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title, description }),
@@ -55,7 +57,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
 
   updateTask: async (id: number, updates: Partial<Task>) => {
     try {
-      const response = await fetch(`/api/tasks/${id}`, {
+      const response = await fetch(`${API_URL}/api/tasks/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updates),
@@ -70,7 +72,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
 
   deleteTask: async (id: number) => {
     try {
-      const response = await fetch(`/api/tasks/${id}`, {
+      const response = await fetch(`${API_URL}/api/tasks/${id}`, {
         method: "DELETE",
       });
       if (response.ok) {
