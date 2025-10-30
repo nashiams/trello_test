@@ -1,3 +1,5 @@
+// File: client/trello_client/src/store/task-store.ts
+
 import { create } from "zustand";
 
 export type Task = {

@@ -1,15 +1,12 @@
+// molecule/column.tsx
+
 "use client";
 
 import { useState } from "react";
 import { TaskCard } from "./task-card";
 import { TaskModal } from "./task-modal";
 import { useDroppable } from "@dnd-kit/core";
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+import { useDraggable } from "@dnd-kit/core";
 import { Minus, Plus } from "lucide-react";
 import type { Task } from "../../store/task-store";
 
@@ -20,30 +17,37 @@ type ColumnProps = {
   status: "To Do" | "In Progress" | "Done";
 };
 
-const SortableTaskCard = ({
+const DraggableTaskCard = ({
   task,
   onClick,
 }: {
   task: Task;
   onClick: () => void;
 }) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: task.id.toString() });
+  const { attributes, listeners, setNodeRef, transform, isDragging } =
+    useDraggable({
+      id: task.id, // Use number ID directly
+      data: {
+        task: task,
+        status: task.status,
+      },
+    });
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
+  const style = transform
+    ? {
+        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+        opacity: isDragging ? 0.5 : 1,
+      }
+    : undefined;
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...listeners}
+      {...attributes}
+      className="mb-2"
+    >
       <TaskCard task={task} onClick={onClick} />
     </div>
   );
@@ -54,8 +58,11 @@ export const Column = ({ title, bgColor, tasks, status }: ColumnProps) => {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isMinimized, setIsMinimized] = useState(false);
 
-  const { setNodeRef } = useDroppable({
+  const { setNodeRef, isOver } = useDroppable({
     id: status,
+    data: {
+      status: status,
+    },
   });
 
   const handleAddCard = () => {
@@ -68,21 +75,17 @@ export const Column = ({ title, bgColor, tasks, status }: ColumnProps) => {
     setIsModalOpen(true);
   };
 
+  // Log for debugging
+  console.log(`Column "${status}" - isOver: ${isOver}, tasks: ${tasks.length}`);
+
   return (
     <>
       <div
         className="flex flex-col min-w-[280px] max-w-[280px] rounded-xl"
-        style={{
-          backgroundColor: bgColor,
-        }}
+        style={{ backgroundColor: bgColor }}
       >
         <div className="px-4 py-3 flex items-center justify-between">
-          <h2
-            className="text-[14px] font-medium text-white"
-            style={{ fontFamily: "Inter Tight" }}
-          >
-            {title}
-          </h2>
+          <h2 className="text-[14px] font-medium text-white">{title}</h2>
           <button
             onClick={() => setIsMinimized(!isMinimized)}
             className="text-white/60 hover:text-white hover:bg-white/10 rounded p-1 transition-all"
@@ -96,25 +99,26 @@ export const Column = ({ title, bgColor, tasks, status }: ColumnProps) => {
         </div>
 
         {!isMinimized && (
-          <div ref={setNodeRef} className="px-3 pb-3 flex flex-col">
-            <div className="space-y-2 mb-2">
-              <SortableContext
-                items={tasks.map((t) => t.id.toString())}
-                strategy={verticalListSortingStrategy}
-              >
-                {tasks.map((task) => (
-                  <SortableTaskCard
-                    key={task.id}
-                    task={task}
-                    onClick={() => handleCardClick(task)}
-                  />
-                ))}
-              </SortableContext>
+          <div
+            ref={setNodeRef}
+            className={`px-3 pb-3 flex flex-col flex-1 min-h-[400px] transition-colors ${
+              isOver ? "bg-white/5" : ""
+            }`}
+            data-status={status}
+          >
+            <div className="flex-1">
+              {tasks.map((task) => (
+                <DraggableTaskCard
+                  key={task.id}
+                  task={task}
+                  onClick={() => handleCardClick(task)}
+                />
+              ))}
             </div>
 
             <button
               onClick={handleAddCard}
-              className="w-full text-left px-3 py-2 rounded-lg text-[14px] text-gray-300 hover:bg-white/10 transition-colors"
+              className="w-full text-left px-3 py-2 rounded-lg text-[14px] text-gray-300 hover:bg-white/10 transition-colors mt-2"
             >
               + Add a card
             </button>

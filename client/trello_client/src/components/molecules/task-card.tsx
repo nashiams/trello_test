@@ -1,8 +1,10 @@
+// File: client/trello_client/src/components/molecules/task-card.tsx
+
 "use client";
 
-import { useState } from "react";
-import { X, Circle, CheckCircle2 } from "lucide-react";
+import { X } from "lucide-react";
 import { useTaskStore, type Task } from "../../store/task-store";
+import { useState, useRef } from "react";
 
 type TaskCardProps = {
   task: Task;
@@ -10,8 +12,9 @@ type TaskCardProps = {
 };
 
 export const TaskCard = ({ task, onClick }: TaskCardProps) => {
-  const { deleteTask, updateTask } = useTaskStore();
-  const [isHovered, setIsHovered] = useState(false);
+  const { deleteTask } = useTaskStore();
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartPos = useRef({ x: 0, y: 0 });
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -24,20 +27,36 @@ export const TaskCard = ({ task, onClick }: TaskCardProps) => {
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault();
     await deleteTask(task.id);
   };
 
-  const handleMarkDone = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    await updateTask(task.id, { status: "Done" });
+  const handlePointerDown = (e: React.PointerEvent) => {
+    dragStartPos.current = { x: e.clientX, y: e.clientY };
+    setIsDragging(false);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    const deltaX = Math.abs(e.clientX - dragStartPos.current.x);
+    const deltaY = Math.abs(e.clientY - dragStartPos.current.y);
+    if (deltaX > 5 || deltaY > 5) {
+      setIsDragging(true);
+    }
+  };
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (!isDragging) {
+      e.stopPropagation();
+      onClick();
+    }
   };
 
   return (
     <div
-      onClick={onClick}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      className="bg-[#22272b] hover:bg-[#2c333a] rounded-lg p-3 cursor-pointer transition-all border border-[#2c333a] relative group"
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onClick={handleClick}
+      className="bg-[#22272b] hover:bg-[#2c333a] rounded-lg p-3 transition-all border border-[#2c333a] relative group cursor-grab"
     >
       <button
         onClick={handleDelete}
@@ -46,35 +65,15 @@ export const TaskCard = ({ task, onClick }: TaskCardProps) => {
         <X className="w-4 h-4 text-red-500 hover:text-red-400" />
       </button>
 
-      <div className="flex items-start gap-2">
-        <div className="shrink-0 mt-0.5 w-4 h-4">
-          {isHovered && task.status !== "Done" && (
-            <button
-              onClick={handleMarkDone}
-              className="hover:scale-110 transition-all duration-200 ease-in-out"
-            >
-              <Circle className="w-4 h-4 text-gray-400 hover:text-green-500 transition-colors duration-200" />
-            </button>
-          )}
-          {isHovered && task.status === "Done" && (
-            <CheckCircle2 className="w-4 h-4 text-green-500 transition-all duration-200 ease-in-out" />
-          )}
-        </div>
-        <h3
-          className={`text-[14px] font-normal text-white mb-2 pr-6 flex-1 transition-transform duration-200 ease-in-out ${
-            isHovered ? "translate-x-1" : ""
-          }`}
-        >
-          {task.title}
-        </h3>
-      </div>
+      <h3 className="text-[14px] font-normal text-white mb-2 pr-6">
+        {task.title}
+      </h3>
 
       {task.description && (
-        <p className="text-[12px] text-gray-400 mb-2 ml-4">
-          {task.description}
-        </p>
+        <p className="text-[12px] text-gray-400 mb-2">{task.description}</p>
       )}
-      <div className="flex flex-col gap-1 ml-4">
+
+      <div className="flex flex-col gap-1">
         <div className="flex items-center gap-2">
           <span className="text-[11px] text-gray-500">Status:</span>
           <span className="text-[11px] text-gray-300">{task.status}</span>
