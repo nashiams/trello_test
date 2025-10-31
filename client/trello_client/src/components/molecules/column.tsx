@@ -26,7 +26,7 @@ const DraggableTaskCard = ({
 }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
-      id: task.id, // Use number ID directly
+      id: task.id, // Use number ID
       data: {
         task: task,
         status: task.status,

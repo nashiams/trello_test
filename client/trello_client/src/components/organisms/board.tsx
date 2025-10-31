@@ -1,4 +1,3 @@
-// File: client/trello_client/src/components/organisms/board.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -34,15 +33,18 @@ export const Board = () => {
   const handleDragStart = (event: DragStartEvent) => {
     const taskId = event.active.id;
 
-    let task = null;
+    let task: Task | null = null;
     for (const status in tasks) {
-      task = tasks[status].find(
+      const foundTask = tasks[status].find(
         (t) =>
           t.id === taskId ||
           t.id === parseInt(taskId.toString()) ||
           t.id.toString() === taskId.toString()
       );
-      if (task) break;
+      if (foundTask) {
+        task = foundTask;
+        break;
+      }
     }
 
     setActiveTask(task);
@@ -58,17 +60,17 @@ export const Board = () => {
     const taskId = active.id;
     const newStatus = over.id as "To Do" | "In Progress" | "Done";
 
-    let currentTask = null;
-    let currentStatus = null;
+    let currentTask: Task | null = null;
+    let currentStatus: string | null = null;
     for (const status in tasks) {
-      const task = tasks[status].find(
+      const foundTask = tasks[status].find(
         (t) =>
           t.id === taskId ||
           t.id === parseInt(taskId.toString()) ||
           t.id.toString() === taskId.toString()
       );
-      if (task) {
-        currentTask = task;
+      if (foundTask) {
+        currentTask = foundTask;
         currentStatus = status;
         break;
       }
