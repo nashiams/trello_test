@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "app.js",
   "scripts": {
-    "prestart": "npx sequelize db:migrate",
+    "prestart": "npx sequelize db:create || echo 'DB already exists' && npx sequelize db:migrate",
     "start": "node ./bin/www",
     "dev": "node --watch ./bin/www",
     "pretest": "cross-env NODE_ENV=test npx sequelize db:create --env test || echo 'DB already exists'",
