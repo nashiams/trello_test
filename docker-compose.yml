@@ -33,12 +33,26 @@ services:
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=${DB_NAME}
       - DB_HOST=db
-      - DB_PORT=${DB_PORT}
+      - DB_PORT=5432
       - PORT=3000
     ports:
       - "3000:3000"
     volumes:
       - ./server:/app
+
+  frontend:
+    build:
+      context: ./client/trello_client
+      dockerfile: Dockerfile
+    container_name: react_frontend
+    env_file:
+      - .env
+    depends_on:
+      - backend
+    environment:
+      - VITE_API_URL=http://localhost:3000
+    ports:
+      - "5173:80"
 
 volumes:
   db_data:
