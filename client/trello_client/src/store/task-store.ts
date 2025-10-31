@@ -58,30 +58,87 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   },
 
   updateTask: async (id: number, updates: Partial<Task>) => {
+    const currentTasks = get().tasks;
+
+    // Find the task and its current status
+    let targetTask: Task | null = null;
+    let oldStatus: "To Do" | "In Progress" | "Done" | null = null;
+
+    for (const status in currentTasks) {
+      const task = currentTasks[status].find((t) => t.id === id);
+      if (task) {
+        targetTask = task;
+        oldStatus = status as "To Do" | "In Progress" | "Done";
+        break;
+      }
+    }
+
+    if (!targetTask || !oldStatus) return;
+
+    // Optimistic update
+    const updatedTask = {
+      ...targetTask,
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    };
+    const newStatus = updates.status || oldStatus;
+    const newTasks = { ...currentTasks };
+
+    // Remove from old status
+    newTasks[oldStatus] = newTasks[oldStatus].filter((t) => t.id !== id);
+
+    // Add to new status
+    newTasks[newStatus] = [...newTasks[newStatus], updatedTask];
+
+    // Update state immediately
+    set({ tasks: newTasks });
+
+    // Update on server in background
     try {
       const response = await fetch(`${API_URL}/api/tasks/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updates),
       });
-      if (response.ok) {
-        await get().fetchTasks();
+
+      if (!response.ok) {
+        // Revert on error
+        console.error("Failed to update task");
+        set({ tasks: currentTasks });
       }
     } catch (error) {
       console.error("Failed to update task:", error);
+      // Revert on error
+      set({ tasks: currentTasks });
     }
   },
 
   deleteTask: async (id: number) => {
+    const currentTasks = get().tasks;
+
+    // Optimistic delete
+    const newTasks = { ...currentTasks };
+    for (const status in newTasks) {
+      newTasks[status] = newTasks[status].filter((t) => t.id !== id);
+    }
+
+    set({ tasks: newTasks });
+
+    // Delete on server in background
     try {
       const response = await fetch(`${API_URL}/api/tasks/${id}`, {
         method: "DELETE",
       });
-      if (response.ok) {
-        await get().fetchTasks();
+
+      if (!response.ok) {
+        // Revert on error
+        console.error("Failed to delete task");
+        set({ tasks: currentTasks });
       }
     } catch (error) {
       console.error("Failed to delete task:", error);
+      // Revert on error
+      set({ tasks: currentTasks });
     }
   },
 }));

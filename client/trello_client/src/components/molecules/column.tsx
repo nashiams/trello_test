@@ -75,9 +75,6 @@ export const Column = ({ title, bgColor, tasks, status }: ColumnProps) => {
     setIsModalOpen(true);
   };
 
-  // Log for debugging
-  console.log(`Column "${status}" - isOver: ${isOver}, tasks: ${tasks.length}`);
-
   return (
     <>
       <div
@@ -101,7 +98,7 @@ export const Column = ({ title, bgColor, tasks, status }: ColumnProps) => {
         {!isMinimized && (
           <div
             ref={setNodeRef}
-            className={`px-3 pb-3 flex flex-col flex-1 min-h-[400px] transition-colors ${
+            className={`px-3 pb-3 flex flex-col transition-colors ${
               isOver ? "bg-white/5" : ""
             }`}
             data-status={status}

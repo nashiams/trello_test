@@ -16,9 +16,8 @@ import { Column } from "../molecules/column";
 import { useTaskStore, type Task } from "../../store/task-store";
 
 export const Board = () => {
-  const { tasks, isLoading, fetchTasks } = useTaskStore();
+  const { tasks, isLoading, fetchTasks, updateTask } = useTaskStore();
   const [activeTask, setActiveTask] = useState<Task | null>(null);
-  const [debugInfo, setDebugInfo] = useState<string[]>([]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -32,36 +31,18 @@ export const Board = () => {
     fetchTasks();
   }, [fetchTasks]);
 
-  const addDebug = (message: string) => {
-    console.log(`[DND Debug] ${message}`);
-    setDebugInfo((prev) => [
-      ...prev.slice(-4),
-      `${new Date().toLocaleTimeString()}: ${message}`,
-    ]);
-  };
-
   const handleDragStart = (event: DragStartEvent) => {
     const taskId = event.active.id;
-    addDebug(`Drag Start - Task ID: ${taskId} (type: ${typeof taskId})`);
 
-    // Try to find the task - check if ID needs parsing
     let task = null;
     for (const status in tasks) {
-      // Try both number and string comparison
       task = tasks[status].find(
         (t) =>
           t.id === taskId ||
           t.id === parseInt(taskId.toString()) ||
           t.id.toString() === taskId.toString()
       );
-      if (task) {
-        addDebug(`Found task "${task.title}" in status "${status}"`);
-        break;
-      }
-    }
-
-    if (!task) {
-      addDebug(`ERROR: Could not find task with ID ${taskId}`);
+      if (task) break;
     }
 
     setActiveTask(task);
@@ -70,21 +51,13 @@ export const Board = () => {
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
 
-    addDebug(`Drag End - Active: ${active?.id}, Over: ${over?.id}`);
-
     setActiveTask(null);
 
-    if (!over) {
-      addDebug("No drop target - cancelled");
-      return;
-    }
+    if (!over) return;
 
     const taskId = active.id;
     const newStatus = over.id as "To Do" | "In Progress" | "Done";
 
-    addDebug(`Attempting to move task ${taskId} to "${newStatus}"`);
-
-    // Find current task with flexible ID matching
     let currentTask = null;
     let currentStatus = null;
     for (const status in tasks) {
@@ -101,49 +74,10 @@ export const Board = () => {
       }
     }
 
-    if (!currentTask) {
-      addDebug(`ERROR: Task ${taskId} not found in any column`);
-      return;
-    }
+    if (!currentTask || currentStatus === newStatus) return;
 
-    addDebug(
-      `Found task "${currentTask.title}" in "${currentStatus}", moving to "${newStatus}"`
-    );
-
-    // Check if status actually changed
-    if (currentStatus === newStatus) {
-      addDebug("Same column - no update needed");
-      return;
-    }
-
-    // Try to update
-    try {
-      const apiUrl = `${
-        import.meta.env.VITE_API_URL || "http://localhost:3000"
-      }/api/tasks/${currentTask.id}`;
-      addDebug(`Making API call to: ${apiUrl}`);
-
-      const response = await fetch(apiUrl, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
-      });
-
-      const responseText = await response.text();
-      addDebug(
-        `API Response: ${response.status} - ${responseText.substring(0, 100)}`
-      );
-
-      if (response.ok) {
-        addDebug("Update successful - refreshing tasks");
-        await fetchTasks();
-      } else {
-        addDebug(`API Error: ${response.status} - ${responseText}`);
-      }
-    } catch (error) {
-      addDebug(`Network Error: ${error}`);
-      console.error("Failed to update task:", error);
-    }
+    // Use store's updateTask for optimistic update
+    await updateTask(currentTask.id, { status: newStatus });
   };
 
   if (isLoading) {
@@ -154,28 +88,6 @@ export const Board = () => {
     );
   }
 
-  // Debug panel
-  const DebugPanel = () => (
-    <div className="fixed bottom-4 right-4 bg-black/80 text-white p-4 rounded-lg max-w-md z-50">
-      <div className="text-xs font-mono">
-        <div className="font-bold mb-2">🐛 Drag & Drop Debug:</div>
-        {debugInfo.length === 0 ? (
-          <div className="text-gray-400">Waiting for drag events...</div>
-        ) : (
-          debugInfo.map((info, idx) => (
-            <div key={idx} className="text-green-400 mb-1">
-              {info}
-            </div>
-          ))
-        )}
-        <div className="mt-2 text-yellow-400">
-          Tasks loaded: {Object.values(tasks).flat().length} total
-        </div>
-        <div className="text-blue-400">Check console for detailed logs</div>
-      </div>
-    </div>
-  );
-
   return (
     <div
       className="absolute inset-0 bg-cover bg-center bg-no-repeat overflow-auto pt-[60px]"
@@ -184,14 +96,14 @@ export const Board = () => {
           "url(https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/project-uploads/6d8514b8-1f42-47e9-b676-7a86b36dfe9d/generated_images/majestic-mountain-landscape-background-w-ea91d4c1-20251029182923.jpg)",
       }}
     >
-      <div className="w-2/3 p-6">
+      <div className="w-2/3 p-4">
         <DndContext
           sensors={sensors}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
           collisionDetection={closestCenter}
         >
-          <div className="flex gap-4 items-start">
+          <div className="flex gap-3 items-start">
             <Column
               title="To Do"
               bgColor="#543669"
@@ -230,9 +142,6 @@ export const Board = () => {
           </DragOverlay>
         </DndContext>
       </div>
-
-      {/* Debug Panel */}
-      <DebugPanel />
     </div>
   );
 };
